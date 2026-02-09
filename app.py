@@ -34,10 +34,15 @@ except ImportError as e:
 
 # --- INICIALIZAÇÃO DO APP ---
 app = dash.Dash(
-    __name__,
-    external_stylesheets=[dbc.themes.FLATLY, "https://use.fontawesome.com/releases/v5.15.4/css/all.css"],
+    __name__, 
+    external_stylesheets=[
+        dbc.themes.BOOTSTRAP,
+        "https://use.fontawesome.com/releases/v5.15.4/css/all.css",
+        "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" # <--- ADICIONE ISSO
+    ],
     suppress_callback_exceptions=True,
-    meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1.0'}]
+    update_title=None,          # Impede o "Updating..." de piscar
+    title="Monitoramento Manaus" # Define o nome fixo da aba
 )
 server = app.server
 
