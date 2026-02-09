@@ -1,0 +1,156 @@
+/* --- GLOBAL --- */
+body {
+    background-color: #f4f6f9; /* Cinza muito suave para o fundo, destaca os cards brancos */
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #34495e;
+    -webkit-font-smoothing: antialiased; /* Fontes mais nítidas */
+}
+
+/* Personalização da Barra de Rolagem (Mais discreta) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+::-webkit-scrollbar-thumb {
+    background: #bdc3c7; 
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6; 
+}
+
+/* --- NAVBAR (Barra Superior) --- */
+.navbar {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra para destacar do fundo */
+    background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%) !important; /* Gradiente sutil */
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-size: 1.1rem;
+}
+
+.nav-link {
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-link.active {
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    color: #fff !important;
+}
+
+/* --- CARDS (Onde ficam os gráficos) --- */
+.card {
+    border: none !important; /* Remove borda padrão feia */
+    background-color: #ffffff;
+    border-radius: 12px !important; /* Bordas arredondadas modernas */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03); /* Sombra suave */
+    margin-bottom: 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Efeito ao passar o mouse (opcional - dá vida ao dashboard) */
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+    background-color: transparent !important;
+    border-bottom: 1px solid #f0f2f5;
+    padding: 15px 20px;
+    font-weight: 700;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* --- KPIs (Indicadores Numéricos Grandes) --- */
+/* Use: className="kpi-card" no componente Card */
+.kpi-card {
+    border-left: 5px solid #bdc3c7; /* Cor padrão, sobrescrever via style inline no Python */
+    text-align: center;
+}
+
+.kpi-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #2c3e50;
+    line-height: 1.2;
+    margin-top: 10px;
+}
+
+.kpi-title {
+    font-size: 0.85rem;
+    color: #95a5a6;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.kpi-icon {
+    opacity: 0.2;
+    position: absolute;
+    right: 15px;
+    top: 20px;
+    font-size: 3rem;
+}
+
+/* --- TABELAS --- */
+/* Estiliza tabelas do Dash DataTable ou Bootstrap Table */
+.table {
+    font-size: 0.9rem;
+    color: #34495e;
+}
+
+.table thead th {
+    border-top: none;
+    border-bottom: 2px solid #e9ecef;
+    color: #7f8c8d;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+/* --- CORES DE STATUS (Para Alertas) --- */
+/* Use: className="badge-status status-normal" */
+.badge-status {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: white;
+}
+
+.status-normal { background-color: #27ae60; box-shadow: 0 2px 5px rgba(39, 174, 96, 0.3); } /* Verde */
+.status-atencao { background-color: #f39c12; box-shadow: 0 2px 5px rgba(243, 156, 18, 0.3); } /* Laranja */
+.status-alerta { background-color: #e74c3c; box-shadow: 0 2px 5px rgba(231, 76, 60, 0.3); } /* Vermelho */
+.status-info { background-color: #3498db; box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3); } /* Azul */
+
+/* --- LOADING SPINNER --- */
+/* Ajuste para o spinner padrão do Dash não quebrar o layout */
+._dash-loading-callback {
+    font-family: sans-serif;
+    padding-top: 50px;
+    color: #bdc3c7;
+}
+
+/* --- FOOTER --- */
+footer {
+    background-color: white !important;
+    border-top: 1px solid #e9ecef !important;
+}

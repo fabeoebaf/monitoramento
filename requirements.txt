@@ -1,0 +1,20 @@
+# --- Core do Dashboard ---
+dash
+dash-bootstrap-components
+plotly
+pandas
+numpy
+
+# --- Conexão e APIs ---
+requests
+openmeteo-requests
+requests-cache
+retry-requests
+
+# --- Banco de Dados (Essencial para Nuvem) ---
+sqlalchemy
+psycopg2-binary
+python-dotenv
+
+# --- Servidor de Produção (Para o Render) ---
+gunicorn
