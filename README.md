@@ -1,4 +1,4 @@
-# ⛈️ Monitoramento Climático - Defesa Civil de Manaus
+# ⛈️ Painel de monitoramento - Manaus
 
 > Dashboard interativo para monitoramento em tempo real de estações meteorológicas, focado na prevenção e alerta de eventos extremos na cidade de Manaus/AM.
 
@@ -7,7 +7,7 @@
 ![Dash](https://img.shields.io/badge/Dash-Plotly-orange)
 
 ## 🎯 Objetivo
-Este projeto visa fornecer uma interface visual robusta para a **Defesa Civil**, permitindo a visualização rápida de dados críticos como **acumulado de chuva**, **nível dos rios**, **temperatura** e **ventos**. O sistema destaca automaticamente estações em estado de alerta.
+Este projeto visa fornecer uma interface visual robusta para o monitoramento de Manaus, permitindo a visualização rápida de dados críticos como **acumulado de chuva**, **nível dos rios**, **temperatura** e **ventos**. O sistema destaca automaticamente estações em estado de alerta.
 
 ## 📊 Funcionalidades Principais
 
