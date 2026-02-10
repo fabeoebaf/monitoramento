@@ -58,11 +58,17 @@ def style_fig(fig, title):
         template="plotly_white",
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=20, r=20, t=50, b=20),
+        margin=dict(l=20, r=20, t=50, b=50),
         hovermode="x unified",
         font=dict(family="Inter, sans-serif", color="#718096", size=11),
         showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.2,
+            xanchor="center",
+            x=0.5
+        )
     )
     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#f0f0f0', zeroline=False)
     fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#f0f0f0', zeroline=False)
@@ -71,39 +77,59 @@ def style_fig(fig, title):
 def criar_card_estiloso(titulo, valor, unidade, cor, icone, subtexto="", width=2):
     return dbc.Col(dbc.Card([
         dbc.CardBody([
-            html.I(className=f"{icone}", style={"position": "absolute", "right": "15px", "top": "15px", "fontSize": "2.5rem", "opacity": "0.15", "color": cor}),
+            html.I(className=f"{icone}", style={"position": "absolute", "right": "15px", "top": "15px", "fontSize": "2.5rem", "opacity": "1.0", "color": cor}),
             html.H6(titulo, className="text-muted text-uppercase fw-bold mb-2", style={"fontSize": "0.7rem", "letterSpacing": "0.5px"}),
             html.H4([f"{valor}", html.Small(unidade, className="text-muted fs-6 ms-1")], className="fw-bold mb-0", style={"color": "#2c3e50", "fontSize": "1.5rem"}),
             html.Small(subtexto, className="text-muted mt-2 d-block", style={"fontSize": "0.7rem"}),
         ], className="p-3 position-relative")
     ], className="shadow-sm h-100 border-0", style={"borderLeft": f"4px solid {cor}", "borderRadius": "12px", "overflow": "hidden"}), width=6, md=4, lg=width, className="mb-3")
 
+# --- NOVA FUNÇÃO PARA TÍTULOS DE SEÇÃO ---
+def criar_divisoria(titulo, icone, cor="text-primary"):
+    return html.Div([
+        html.H5([
+            html.I(className=f"{icone} me-2"), 
+            titulo
+        ], className=f"fw-bold text-uppercase mt-4 mb-2 {cor}", style={"fontSize": "0.9rem", "letterSpacing": "1px"}),
+        html.Hr(className="mt-0 mb-4", style={"opacity": "0.15"})
+    ])
+
 # --- LAYOUT ---
 layout = dbc.Container(fluid=True, children=[
     dbc.Row([
-        dbc.Col([html.Div([html.H4([html.I(className="fas fa-satellite-dish me-2"), "Centro de Monitoramento"], className="fw-bold text-white mb-0"), html.Small("Defesa Civil de Manaus | Dados em Tempo Real (24h)", className="text-white-50")])], width=12, md=8),
+        dbc.Col([html.Div([html.H4([html.I(className="fas fa-satellite-dish me-2"), "Estações Prefeitura"], className="fw-bold text-white mb-0"), html.Small("Dados em Tempo Real (24h)", className="text-white-50")])], width=12, md=8),
         dbc.Col([dcc.Dropdown(id='filtro-estacao', placeholder="Filtrar por Estação...", className="mb-2 shadow-sm", style={"borderRadius": "8px"}), html.Div(id="timer-display", className="text-end text-white fw-bold font-monospace small")], width=12, md=4, className="d-flex flex-column justify-content-center mt-2 mt_md-0")
     ], className="py-4 px-4 mb-4 rounded-3 shadow-sm align-items-center", style={"background": "linear-gradient(135deg, #1a202c 0%, #2d3748 100%)", "marginTop": "-10px"}),
 
     html.H6([html.I(className="fas fa-bolt me-2 text-warning"), "Destaques Climáticos (Últimas 24h)"], className="text-secondary fw-bold text-uppercase mb-3 ms-1"),
     html.Div(id="linha-extremos"),
 
+    # MAPA E RESUMO
     dbc.Row([
-        dbc.Col([dbc.Card([dbc.CardHeader([html.I(className="fas fa-map-marked-alt me-2"), "Geolocalização"], className="bg-white fw-bold border-bottom"), dbc.CardBody(dcc.Graph(id='mapa-estacoes', style={"height": "500px"}, config=GRAPH_CONFIG), className="p-0 overflow-hidden", style={"borderRadius": "0 0 12px 12px"})], className="shadow-sm border-0 h-100")], width=12, lg=5, className="mb-4"),
+        dbc.Col([dbc.Card([dbc.CardHeader([html.I(className="fas fa-map-marked-alt me-2"), "Geolocalização - Estações Meteológicas"], className="bg-white fw-bold border-bottom"), dbc.CardBody(dcc.Graph(id='mapa-estacoes', style={"height": "500px"}, config=GRAPH_CONFIG), className="p-0 overflow-hidden", style={"borderRadius": "0 0 12px 12px"})], className="shadow-sm border-0 h-100")], width=12, lg=5, className="mb-4"),
         dbc.Col([dbc.Card([dbc.CardHeader([html.I(className="fas fa-list-ul me-2"), "Resumo das Estações"], className="bg-white fw-bold border-bottom"), dbc.CardBody(id="cards-medias", className="p-3", style={"maxHeight": "500px", "overflowY": "auto"})], className="shadow-sm border-0 h-100")], width=12, lg=7, className="mb-4"),
     ]),
 
-    html.H6([html.I(className="fas fa-broadcast-tower me-2 text-info"), "Telemetria em Tempo Real"], className="text-secondary fw-bold text-uppercase mb-3 ms-1 mt-2"),
+    # TELEMETRIA (Cards Atuais)
+    criar_divisoria("Telemetria em Tempo Real", "fas fa-broadcast-tower", "text-info"),
     dbc.Row(id="cards-atuais", className="mb-4"),
 
+    # SEÇÃO 1: TEMPERATURA E UMIDADE
+    criar_divisoria("Temperatura e Umidade Relativa", "fas fa-thermometer-half", "text-danger"),
     dbc.Row([
         dbc.Col(dbc.Card(dcc.Graph(id='grafico-temperatura', config=GRAPH_CONFIG), className="shadow-sm border-0 p-2"), width=12, lg=6, className="mb-4"),
         dbc.Col(dbc.Card(dcc.Graph(id='grafico-umidade', config=GRAPH_CONFIG), className="shadow-sm border-0 p-2"), width=12, lg=6, className="mb-4"),
     ]),
+
+    # SEÇÃO 2: CHUVAS
+    criar_divisoria("Monitoramento Pluviométrico", "fas fa-cloud-showers-heavy", "text-primary"),
     dbc.Row([
         dbc.Col(dbc.Card(dcc.Graph(id='grafico-chuva-tempo', config=GRAPH_CONFIG), className="shadow-sm border-0 p-2"), width=12, lg=6, className="mb-4"),
         dbc.Col(dbc.Card(dcc.Graph(id='grafico-chuva-acumulado', config=GRAPH_CONFIG), className="shadow-sm border-0 p-2"), width=12, lg=6, className="mb-4"),
     ]),
+
+    # SEÇÃO 3: VENTOS E PRESSÃO
+    criar_divisoria("Monitoramento Eólico e Pressão", "fas fa-wind", "text-success"),
     dbc.Row([
         dbc.Col(dbc.Card(dcc.Graph(id='grafico-vento-velocidade', config=GRAPH_CONFIG), className="shadow-sm border-0 p-2 h-100"), width=12, lg=6, className="mb-4"),
         dbc.Col(dbc.Card(dcc.Graph(id='grafico-vento-direcao', config=GRAPH_CONFIG), className="shadow-sm border-0 p-2 h-100"), width=12, lg=6, className="mb-4"),
@@ -112,7 +138,8 @@ layout = dbc.Container(fluid=True, children=[
         dbc.Col(dbc.Card(dcc.Graph(id='grafico-pressao', config=GRAPH_CONFIG), className="shadow-sm border-0 p-2 h-100"), width=12, className="mb-4"),
     ]),
 
-    # TABELA EVOLUÍDA
+    # TABELA DE AUDITORIA (SEM ALTERAÇÕES)
+    criar_divisoria("Auditoria de Dados", "fas fa-list-alt", "text-dark"),
     dbc.Row([
         dbc.Col(dbc.Card([
             dbc.CardHeader([
@@ -123,13 +150,12 @@ layout = dbc.Container(fluid=True, children=[
             dbc.CardBody([
                 dash_table.DataTable(
                     id='tabela-auditoria',
-                    page_size=15,              # Mostra 15 linhas por página
-                    page_action='native',      # Paginação automática
-                    sort_action='native',      # Permite ordenar colunas
-                    filter_action='native',    # Caixa de busca em cada coluna
-                    style_as_list_view=True,   # Remove grades verticais (visual limpo)
+                    page_size=15, 
+                    page_action='native', 
+                    sort_action='native', 
+                    filter_action='native', 
+                    style_as_list_view=True, 
                     
-                    # Estilo do Cabeçalho
                     style_header={
                         'backgroundColor': '#f8f9fa',
                         'fontWeight': 'bold',
@@ -138,7 +164,6 @@ layout = dbc.Container(fluid=True, children=[
                         'textAlign': 'center'
                     },
                     
-                    # Estilo das Células (Geral)
                     style_cell={
                         'fontFamily': 'Inter, sans-serif',
                         'fontSize': '12px',
@@ -147,34 +172,13 @@ layout = dbc.Container(fluid=True, children=[
                         'color': '#4a5568'
                     },
                     
-                    # Estilo Condicional (Cores baseadas em valores)
                     style_data_conditional=[
-                        # Listras alternadas (Zebra Striping)
-                        {
-                            'if': {'row_index': 'odd'},
-                            'backgroundColor': '#fcfcfc'
-                        },
-                        # Alerta Chuva > 10mm (Texto Vermelho Negrito)
-                        {
-                            'if': {
-                                'filter_query': '{chuva_mm} >= 10',
-                                'column_id': 'chuva_mm'
-                            },
-                            'color': '#e53e3e',
-                            'fontWeight': 'bold'
-                        },
-                        # Alerta Vento > 10m/s (Texto Laranja)
-                        {
-                            'if': {
-                                'filter_query': '{vento_vel} >= 10',
-                                'column_id': 'vento_vel'
-                            },
-                            'color': '#dd6b20',
-                            'fontWeight': 'bold'
-                        }
+                        {'if': {'row_index': 'odd'}, 'backgroundColor': '#fcfcfc'},
+                        {'if': {'filter_query': '{chuva_mm} >= 10', 'column_id': 'chuva_mm'}, 'color': '#e53e3e', 'fontWeight': 'bold'},
+                        {'if': {'filter_query': '{vento_vel} >= 10', 'column_id': 'vento_vel'}, 'color': '#dd6b20', 'fontWeight': 'bold'}
                     ],
                 )
-            ], className="p-0") # Remove padding do card body pra tabela colar na borda
+            ], className="p-0")
         ], className="shadow-sm border-0 mb-5 overflow-hidden"))
     ]),
 
@@ -205,7 +209,6 @@ def register_callbacks(app):
         empty_return = [[]] + [None]*3 + [[], []] + [fig_empty]*8
 
         try:
-            
             # 1. Carregar Dados
             query = "SELECT * FROM defesa_civil ORDER BY data_hora ASC"
             df = ler_dados(query)
@@ -219,7 +222,7 @@ def register_callbacks(app):
             df.rename(columns={'data_hora': 'tempo'}, inplace=True)
             df['tempo'] = pd.to_datetime(df['tempo'])
 
-            # --- TRATAMENTO ---
+            # --- TRATAMENTO (VOLTAR PARA 1min) ---
             df = df.drop_duplicates(subset=['nome_estacao', 'tempo'], keep='last')
             
             dfs_tratados = []
@@ -227,10 +230,13 @@ def register_callbacks(app):
                 df_est = df_est.sort_values('tempo')
                 df_est = df_est.set_index('tempo')
                 
+                # MANTENHA AQUI COMO 1min (Dados brutos precisos)
                 df_res = df_est.resample('1min').mean(numeric_only=True)
                 
                 if 'chuva_mm' in df_est.columns:
+                    # MANTENHA AQUI COMO 1min
                     df_res['chuva_mm'] = df_est['chuva_mm'].resample('1min').max()
+                    
                     df_res['chuva_mm'] = df_res['chuva_mm'].ffill().fillna(0)
                     df_res['chuva_delta'] = df_res['chuva_mm'].diff().fillna(0)
                     df_res.loc[df_res['chuva_delta'] < 0, 'chuva_delta'] = 0
@@ -330,7 +336,16 @@ def register_callbacks(app):
             # GRÁFICOS
             def safe_plot(data, x, y, color, title):
                 if data.empty or y not in data.columns: return fig_empty
-                return style_fig(px.line(data, x=x, y=y, color=color, render_mode='svg'), title)
+                
+                # --- SUAVIZAÇÃO VISUAL (10 min) ---
+                # Agrupa por estação e tira a média a cada 10 minutos
+                # Isso remove o ruído "ziguezague" sem perder dados na tabela/chuva
+                try:
+                    df_smooth = data.set_index('tempo').groupby(color)[y].resample('10min').mean().reset_index()
+                except:
+                    df_smooth = data # Fallback se der erro
+                
+                return style_fig(px.line(df_smooth, x='tempo', y=y, color=color, render_mode='svg'), title)
 
             fig_t = safe_plot(df, "tempo", "temp_ar", "nome_estacao", "Evolução da Temperatura (°C)")
             fig_u = safe_plot(df, "tempo", "umidade", "nome_estacao", "Umidade Relativa (%)")
@@ -410,7 +425,15 @@ def register_callbacks(app):
                     fig_mapa.update_layout(
                         mapbox_style="open-street-map", 
                         margin={"r":0,"t":0,"l":0,"b":0}, 
-                        legend=dict(orientation="h", y=0.01, x=0.5, bgcolor="rgba(255,255,255,0.9)")
+                        legend=dict(
+                            orientation="h",       # Horizontal
+                            yanchor="bottom",      # Ancora embaixo
+                            y=0.02,                # Levemente acima da borda inferior
+                            xanchor="center",      # <<< O SEGREDO: Ancora pelo centro
+                            x=0.5,                 # Posiciona no meio exato (50%)
+                            bgcolor="rgba(255,255,255,0.9)",
+                            title=""               # Remove título da legenda para economizar espaço
+                        )
                     )
                 else: fig_mapa = fig_empty
             else: fig_mapa = fig_empty
