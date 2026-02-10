@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import traceback
+import pytz
+
 
 # --- IMPORTAÇÃO (Banco de Dados) ---
 try:
@@ -221,6 +223,12 @@ def register_callbacks(app):
 
             df.rename(columns={'data_hora': 'tempo'}, inplace=True)
             df['tempo'] = pd.to_datetime(df['tempo'])
+            
+            # 1. Define o fuso horário de Manaus
+            tz_manaus = pytz.timezone('America/Manaus')
+            agora_manaus = datetime.now(tz_manaus)
+            agora_corrigido = agora_manaus.replace(tzinfo=None)
+            data_limite_24h = agora_corrigido - timedelta(hours=24) # Use hours=24 para garantir precisão
 
             # --- TRATAMENTO (VOLTAR PARA 1min) ---
             df = df.drop_duplicates(subset=['nome_estacao', 'tempo'], keep='last')
@@ -251,7 +259,7 @@ def register_callbacks(app):
                 
             if dfs_tratados: df = pd.concat(dfs_tratados, ignore_index=True)
 
-            df = df[df['tempo'] >= (datetime.now() - timedelta(days=1))]
+            df = df[df['tempo'] >= data_limite_24h]
             if df.empty: return empty_return
 
             df['sensacao'] = df.apply(lambda r: calcular_sensacao(r.get('temp_ar'), r.get('umidade')), axis=1)
