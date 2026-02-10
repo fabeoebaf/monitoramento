@@ -4,7 +4,7 @@ dash-bootstrap-components
 plotly
 pandas
 numpy
-
+pytz
 # --- Conexão e APIs ---
 requests
 openmeteo-requests
