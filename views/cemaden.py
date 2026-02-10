@@ -7,6 +7,8 @@ import numpy as np
 import re
 from datetime import datetime, timedelta
 import traceback
+# Importação essencial para formatar números mantendo a ordenação correta
+from dash.dash_table.Format import Format, Scheme, Symbol 
 
 # --- IMPORTAÇÃO (Banco de Dados) ---
 try:
@@ -14,7 +16,7 @@ try:
 except ImportError:
     def ler_dados(query): return pd.DataFrame()
 
-# --- COORDENADAS ---
+# --- COORDENADAS (COM CORREÇÃO PARA BAIRRO DA UNIÃO) ---
 COORDENADAS_CEMADEN = {
     'Igarapé do Quarenta': {'lat': -3.119457, 'lon': -59.978352},
     'Igarape do Quarenta': {'lat': -3.119457, 'lon': -59.978352}, 
@@ -30,8 +32,15 @@ COORDENADAS_CEMADEN = {
     'Cidade de Deus': {'lat': -3.01954, 'lon': -59.94026},
     'Santa Luzia': {'lat': -3.13807, 'lon': -60.00741},
     'Flores': {'lat': -3.04046, 'lon': -59.99958},
+    
+    # --- VARIAÇÕES PARA GARANTIR QUE O BAIRRO DA UNIÃO APAREÇA ---
     'Bairro da União': {'lat': -3.09952, 'lon': -60.0159},
     'Bairro da Uniao': {'lat': -3.09952, 'lon': -60.0159},
+    'Bairro União': {'lat': -3.09952, 'lon': -60.0159},
+    'Bairro Uniao': {'lat': -3.09952, 'lon': -60.0159},
+    'União': {'lat': -3.09952, 'lon': -60.0159},
+    # -------------------------------------------------------------
+
     'Santa Etelvina': {'lat': -2.98676, 'lon': -60.01654},
     'Tarumã': {'lat': -3.00228, 'lon': -60.04581},
     'Redenção': {'lat': -3.05418, 'lon': -60.04631},
@@ -41,41 +50,32 @@ COORDENADAS_CEMADEN = {
 
 # --- LIMIARES DE ALERTA (MANAUS) ---
 LIMIARES = {
-    'NORMAL': {'min': 0, 'max': 9.9, 'cor': '#2ecc71', 'cor_texto': '#2c3e50', 'icone': 'fa-check-circle'},
-    'OBSERVAÇÃO': {'min': 10, 'max': 29.9, 'cor': '#f1c40f', 'cor_texto': '#2c3e50', 'icone': 'fa-exclamation-circle'},
-    'ATENÇÃO': {'min': 30, 'max': 70, 'cor': '#e67e22', 'cor_texto': '#ffffff', 'icone': 'fa-exclamation-triangle'},
-    'CRÍTICO': {'min': 70, 'max': 999, 'cor': '#e74c3c', 'cor_texto': '#ffffff', 'icone': 'fa-skull-crossbones'}
+    'NORMAL': {'min': 0, 'max': 9.99, 'cor': '#2ecc71', 'cor_texto': '#2c3e50', 'icone': 'fa-cloud-sun'},
+    'OBSERVAÇÃO': {'min': 10, 'max': 29.99, 'cor': '#f1c40f', 'cor_texto': '#2c3e50', 'icone': 'fa-cloud-rain'},
+    'ATENÇÃO': {'min': 30, 'max': 69.99, 'cor': '#e67e22', 'cor_texto': '#ffffff', 'icone': 'fa-bolt'},
+    'CRÍTICO': {'min': 70, 'max': 9999, 'cor': '#e74c3c', 'cor_texto': '#ffffff', 'icone': 'fa-house-flood-water'}
 }
 
 def get_nivel_alerta(valor):
-    """Retorna o nível de alerta baseado no valor da chuva 24h"""
-    if valor > LIMIARES['CRÍTICO']['min']:
-        return 'CRÍTICO'
-    elif valor >= LIMIARES['ATENÇÃO']['min']:
-        return 'ATENÇÃO'
-    elif valor >= LIMIARES['OBSERVAÇÃO']['min']:
-        return 'OBSERVAÇÃO'
-    else:
-        return 'NORMAL'
+    if valor >= 70: return 'CRÍTICO'
+    if valor >= 30: return 'ATENÇÃO'
+    if valor >= 10: return 'OBSERVAÇÃO'
+    return 'NORMAL'
 
 # --- FUNÇÕES AUXILIARES ---
 def limpar_nome_estacao(nome_sujo):
     if not isinstance(nome_sujo, str): return str(nome_sujo)
     nome = nome_sujo.replace("CEMADEN - ", "")
     nome = re.sub(r'\s*[\(\[].*?[\)\]]', '', nome)
-    return nome.strip()
+    # Remove espaços duplos e nas pontas (Isso ajuda no mapa!)
+    return " ".join(nome.split())
 
 def get_color_code(v):
-    if v > 70: return '#e74c3c'  # Vermelho
-    if v >= 30: return '#e67e22' # Laranja
-    if v >= 10: return '#f1c40f' # Amarelo
-    return '#2ecc71'             # Verde
+    nivel = get_nivel_alerta(v)
+    return LIMIARES[nivel]['cor']
 
 def get_categoria_status(v):
-    if v > 70: return "CRÍTICO"
-    if v >= 30: return "ATENÇÃO"
-    if v >= 10: return "OBSERVAÇÃO"
-    return "NORMAL"
+    return get_nivel_alerta(v)
 
 def style_fig(fig, title):
     fig.update_layout(
@@ -94,7 +94,7 @@ def style_fig(fig, title):
     fig.update_yaxes(showgrid=True, gridcolor='#f0f2f5', zeroline=False)
     return fig
 
-# --- FUNÇÃO DE DESTAQUE (Igual ao Monitoramento) ---
+# --- FUNÇÃO DE DESTAQUE ---
 def criar_divisoria(titulo, icone, cor="text-primary"):
     return html.Div([
         html.H5([html.I(className=f"{icone} me-2"), titulo], 
@@ -104,7 +104,7 @@ def criar_divisoria(titulo, icone, cor="text-primary"):
     ])
 
 GRAPH_CONFIG = {
-    'displayModeBar': False,
+    'displayModeBar': True,
     'staticPlot': False
 }
 
@@ -186,7 +186,6 @@ def register_callbacks(app):
     def update_cemaden(n, est_filt):
         fig_empty = px.scatter(title="Aguardando dados...")
         fig_empty.update_layout(template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-        
         empty_return = [[], html.Div("Sem dados.", className="p-3 text-muted"), fig_empty, [], fig_empty]
 
         try:
@@ -220,368 +219,157 @@ def register_callbacks(app):
 
             ultimas = df.groupby('nome_limpo').last().reset_index()
 
-            # --- 1. TABELA COM DESTAQUES POR LIMIARES ---
-            ranking_df = ultimas.sort_values('chuva_24h', ascending=False).copy()
-            ranking_df['nivel_alerta'] = ranking_df['chuva_24h'].apply(get_nivel_alerta)
-            
-            # Criar DataFrame para exibição
-            tabela_cols_df = ranking_df[['nome_limpo', 'chuva_1h', 'chuva_6h', 'chuva_24h', 'nivel_alerta']].copy()
-            tabela_cols_df.columns = ['Bairro / Estação', 'Chuva 1h', 'Chuva 6h', 'Chuva 24h', 'Status']
-            
-            # Formatação
-            for c in ['Chuva 1h', 'Chuva 6h', 'Chuva 24h']:
-                tabela_cols_df[c] = tabela_cols_df[c].map(lambda x: f"{x:.1f} mm")
+            # --- 1. TABELA DE RANKING (COM DESTAQUE VISUAL FORTE) ---
+            ranking_df = ultimas.sort_values('chuva_24h', ascending=False).reset_index(drop=True)
+            ranking_df['rank'] = ranking_df.index + 1
+            ranking_df['status_desc'] = ranking_df['chuva_24h'].apply(get_nivel_alerta)
+
+            # Seleciona e ordena as colunas (MANTENDO NUMÉRICO PARA O DASH)
+            tabela_data = ranking_df[['rank', 'nome_limpo', 'chuva_24h', 'status_desc', 'chuva_1h', 'chuva_6h']].to_dict('records')
+
+            # Formatadores Visuais
+            fmt_int = Format(precision=0, scheme=Scheme.fixed)
+            fmt_dec = Format(precision=1, scheme=Scheme.fixed).symbol(Symbol.yes).symbol_suffix(' mm')
 
             tabela_ranking = dash_table.DataTable(
-                data=tabela_cols_df.to_dict('records'),
-                columns=[{'name': i, 'id': i} for i in tabela_cols_df.columns],
+                data=tabela_data,
+                columns=[
+                    {'name': '#', 'id': 'rank', 'type': 'numeric', 'format': fmt_int},
+                    {'name': 'Estação', 'id': 'nome_limpo', 'type': 'text'},
+                    {'name': 'Acum. 24h', 'id': 'chuva_24h', 'type': 'numeric', 'format': fmt_dec},
+                    {'name': 'Status', 'id': 'status_desc', 'type': 'text'},
+                    {'name': '1h', 'id': 'chuva_1h', 'type': 'numeric', 'format': fmt_dec},
+                    {'name': '6h', 'id': 'chuva_6h', 'type': 'numeric', 'format': fmt_dec},
+                ],
                 page_size=10,
                 sort_action='native',
-                filter_action='native',
                 style_as_list_view=True,
                 
-                # Estilo do Cabeçalho
-                style_header={
-                    'backgroundColor': '#2c3e50',
-                    'color': 'white',
-                    'fontWeight': 'bold',
-                    'border': 'none',
-                    'textAlign': 'center',
-                    'fontSize': '12px',
-                    'padding': '12px',
-                    'fontFamily': 'Inter, sans-serif'
-                },
+                # Estilo Geral
+                style_header={'backgroundColor': '#f8f9fa', 'fontWeight': 'bold', 'color': '#4a5568', 'borderBottom': '2px solid #e2e8f0', 'textAlign': 'center', 'fontSize': '12px'},
+                style_cell={'padding': '10px', 'fontFamily': 'Inter, sans-serif', 'fontSize': '13px', 'color': '#2d3748', 'borderBottom': '1px solid #edf2f7'},
                 
-                # Estilo das Células
-                style_cell={
-                    'textAlign': 'center',
-                    'padding': '12px',
-                    'fontFamily': 'Inter, sans-serif',
-                    'fontSize': '12px',
-                    'color': '#4a5568',
-                    'border': '1px solid #e2e8f0',
-                    'minWidth': '100px'
-                },
-                
-                # Estilo Condicional MELHORADO
-                style_data_conditional=[
-                    # Linhas alternadas
-                    {'if': {'row_index': 'odd'}, 'backgroundColor': '#f8f9fa'},
-                    
-                    # DESTAQUES PARA CHUVA 24h
-                    # CRÍTICO (>70mm) - Vermelho
-                    {
-                        'if': {
-                            'filter_query': '{Chuva 24h} >= "70.0"',
-                            'column_id': 'Chuva 24h'
-                        },
-                        'backgroundColor': '#e74c3c',
-                        'color': 'white',
-                        'fontWeight': 'bold',
-                        'borderLeft': '4px solid #c0392b',
-                        'fontSize': '13px'
-                    },
-                    
-                    # ATENÇÃO (30-70mm) - Laranja
-                    {
-                        'if': {
-                            'filter_query': '{Chuva 24h} >= "30.0" && {Chuva 24h} < "70.0"',
-                            'column_id': 'Chuva 24h'
-                        },
-                        'backgroundColor': '#e67e22',
-                        'color': 'white',
-                        'fontWeight': 'bold',
-                        'borderLeft': '4px solid #d35400',
-                        'fontSize': '13px'
-                    },
-                    
-                    # OBSERVAÇÃO (10-30mm) - Amarelo
-                    {
-                        'if': {
-                            'filter_query': '{Chuva 24h} >= "10.0" && {Chuva 24h} < "30.0"',
-                            'column_id': 'Chuva 24h'
-                        },
-                        'backgroundColor': '#f1c40f',
-                        'color': '#2c3e50',
-                        'fontWeight': 'bold',
-                        'borderLeft': '4px solid #f39c12',
-                        'fontSize': '13px'
-                    },
-                    
-                    # NORMAL (<10mm) - Verde claro
-                    {
-                        'if': {
-                            'filter_query': '{Chuva 24h} < "10.0"',
-                            'column_id': 'Chuva 24h'
-                        },
-                        'backgroundColor': '#d5f4e6',
-                        'color': '#2c3e50',
-                        'borderLeft': '4px solid #2ecc71'
-                    },
-                    
-                    # Destaque para coluna Status
-                    {
-                        'if': {
-                            'filter_query': '{Status} = "CRÍTICO"',
-                            'column_id': 'Status'
-                        },
-                        'backgroundColor': '#e74c3c',
-                        'color': 'white',
-                        'fontWeight': 'bold',
-                        'fontSize': '11px',
-                        'textTransform': 'uppercase',
-                        'borderRadius': '12px'
-                    },
-                    {
-                        'if': {
-                            'filter_query': '{Status} = "ATENÇÃO"',
-                            'column_id': 'Status'
-                        },
-                        'backgroundColor': '#e67e22',
-                        'color': 'white',
-                        'fontWeight': 'bold',
-                        'fontSize': '11px',
-                        'textTransform': 'uppercase',
-                        'borderRadius': '12px'
-                    },
-                    {
-                        'if': {
-                            'filter_query': '{Status} = "OBSERVAÇÃO"',
-                            'column_id': 'Status'
-                        },
-                        'backgroundColor': '#f1c40f',
-                        'color': '#2c3e50',
-                        'fontWeight': 'bold',
-                        'fontSize': '11px',
-                        'textTransform': 'uppercase',
-                        'borderRadius': '12px'
-                    },
-                    {
-                        'if': {
-                            'filter_query': '{Status} = "NORMAL"',
-                            'column_id': 'Status'
-                        },
-                        'backgroundColor': '#2ecc71',
-                        'color': 'white',
-                        'fontWeight': 'bold',
-                        'fontSize': '11px',
-                        'textTransform': 'uppercase',
-                        'borderRadius': '12px'
-                    },
-                    
-                    # Destaque para valores altos nas outras colunas
-                    {
-                        'if': {
-                            'filter_query': '{Chuva 1h} >= "10.0"',
-                            'column_id': 'Chuva 1h'
-                        },
-                        'backgroundColor': 'rgba(241, 196, 15, 0.2)',
-                        'fontWeight': 'bold'
-                    },
-                    {
-                        'if': {
-                            'filter_query': '{Chuva 6h} >= "30.0"',
-                            'column_id': 'Chuva 6h'
-                        },
-                        'backgroundColor': 'rgba(230, 126, 34, 0.2)',
-                        'fontWeight': 'bold'
-                    }
+                # Ajuste de Largura
+                style_cell_conditional=[
+                    {'if': {'column_id': 'rank'}, 'width': '40px', 'textAlign': 'center', 'color': '#a0aec0'},
+                    {'if': {'column_id': 'nome_limpo'}, 'textAlign': 'left', 'fontWeight': '600'},
+                    {'if': {'column_id': 'chuva_24h'}, 'textAlign': 'center', 'fontWeight': 'bold'},
+                    {'if': {'column_id': 'status_desc'}, 'textAlign': 'center', 'width': '110px'},
+                    {'if': {'column_id': 'chuva_1h'}, 'textAlign': 'center', 'color': '#718096'},
+                    {'if': {'column_id': 'chuva_6h'}, 'textAlign': 'center', 'color': '#718096'},
                 ],
-                
-                # Estilo da Tabela
-                style_table={
-                    'overflowX': 'auto',
-                    'borderRadius': '8px',
-                    'boxShadow': '0 2px 4px rgba(0,0,0,0.05)'
-                }
+
+                # --- AQUI ESTÁ A MÁGICA DO DESTAQUE ---
+                style_data_conditional=[
+                    {'if': {'row_index': 'odd'}, 'backgroundColor': '#ffffff'}, # Fundo padrão
+                    {'if': {'row_index': 'even'}, 'backgroundColor': '#fcfcfc'}, # Fundo alternado
+
+                    # 1. DESTAQUE NA COLUNA DE VALOR (Fundo Pastel)
+                    # Crítico (>70)
+                    {
+                        'if': {'filter_query': '{chuva_24h} >= 70', 'column_id': 'chuva_24h'},
+                        'backgroundColor': '#fed7d7', 'color': '#c53030' 
+                    },
+                    # Atenção (30-70)
+                    {
+                        'if': {'filter_query': '{chuva_24h} >= 30 && {chuva_24h} < 70', 'column_id': 'chuva_24h'},
+                        'backgroundColor': '#feebc8', 'color': '#c05621' 
+                    },
+                    # Observação (10-30)
+                    {
+                        'if': {'filter_query': '{chuva_24h} >= 10 && {chuva_24h} < 30', 'column_id': 'chuva_24h'},
+                        'backgroundColor': '#fefcbf', 'color': '#744210' 
+                    },
+                    # Normal (<10)
+                    {
+                        'if': {'filter_query': '{chuva_24h} < 10', 'column_id': 'chuva_24h'},
+                        'color': '#2f855a' 
+                    },
+
+                    # 2. DESTAQUE NA COLUNA STATUS (Badge Sólida)
+                    # Crítico
+                    {
+                        'if': {'filter_query': '{status_desc} = "CRÍTICO"', 'column_id': 'status_desc'},
+                        'backgroundColor': '#e53e3e', 'color': 'white', 'fontWeight': 'bold', 'borderRadius': '4px'
+                    },
+                    # Atenção
+                    {
+                        'if': {'filter_query': '{status_desc} = "ATENÇÃO"', 'column_id': 'status_desc'},
+                        'backgroundColor': '#dd6b20', 'color': 'white', 'fontWeight': 'bold', 'borderRadius': '4px'
+                    },
+                    # Observação
+                    {
+                        'if': {'filter_query': '{status_desc} = "OBSERVAÇÃO"', 'column_id': 'status_desc'},
+                        'backgroundColor': '#d69e2e', 'color': 'white', 'fontWeight': 'bold', 'borderRadius': '4px'
+                    },
+                    # Normal
+                    {
+                        'if': {'filter_query': '{status_desc} = "NORMAL"', 'column_id': 'status_desc'},
+                        'backgroundColor': '#c6f6d5', 'color': '#22543d', 'fontWeight': 'bold', 'borderRadius': '4px'
+                    },
+                ]
             )
 
-            # --- 2. MAPA (CONFIGURAÇÃO PADRONIZADA COM MONITORAMENTO) ---
+            # --- 2. MAPA ---
             ultimas['lat'] = ultimas['nome_limpo'].map(lambda x: COORDENADAS_CEMADEN.get(x, {}).get('lat'))
             ultimas['lon'] = ultimas['nome_limpo'].map(lambda x: COORDENADAS_CEMADEN.get(x, {}).get('lon'))
             df_mapa = ultimas.dropna(subset=['lat', 'lon']).copy()
             
             if not df_mapa.empty:
-                # Prepara os dados para o estilo visual solicitado
                 df_mapa['txt_mapa'] = df_mapa['chuva_24h'].apply(lambda x: f"{x:.0f}")
                 df_mapa['status'] = df_mapa['chuva_24h'].apply(get_categoria_status)
-                
-                # Criando o mapa com Plotly Express (Versão que funcionou no monitoramento)
-                fig_mapa = px.scatter_mapbox(
-                    df_mapa, 
-                    lat="lat", lon="lon", 
-                    hover_name="nome_limpo", 
-                    text="txt_mapa", 
-                    color="status", 
-                    color_discrete_map={
-                        "CRÍTICO": "#e74c3c", 
-                        "ATENÇÃO": "#e67e22", 
-                        "OBSERVAÇÃO": "#f1c40f", 
-                        "NORMAL": "#2ecc71"
-                    },
-                    size=[30]*len(df_mapa), # Tamanho fixo para as bolinhas
-                    zoom=10.5, 
-                    center={"lat": -3.05, "lon": -60.03}
-                )
-                
-                # AJUSTE FINAL: TEXTO PRETO E CENTRALIZADO (Igual ao monitoramento)
-                fig_mapa.update_traces(
-                    mode='markers+text',
-                    textposition='middle center',
-                    textfont=dict(size=12, color='black', weight='bold')
-                )
-                
-                # LAYOUT: LEGENDA CENTRALIZADA EM BAIXO
-                fig_mapa.update_layout(
-                    mapbox_style="open-street-map", 
-                    margin={"r":0,"t":0,"l":0,"b":0}, 
-                    legend=dict(
-                        orientation="h", 
-                        yanchor="bottom", 
-                        y=0.01, 
-                        xanchor="center", 
-                        x=0.5, 
-                        bgcolor="rgba(255,255,255,0.9)",
-                        title=""
-                    )
-                )
-            else:
-                fig_mapa = fig_empty
+                color_map = {"CRÍTICO": "#e74c3c", "ATENÇÃO": "#e67e22", "OBSERVAÇÃO": "#f1c40f", "NORMAL": "#2ecc71"}
 
-            # --- 3. CARDS COM DESTAQUES POR LIMIARES ---
+                fig_mapa = px.scatter_mapbox(
+                    df_mapa, lat="lat", lon="lon", hover_name="nome_limpo",
+                    hover_data={'lat': False, 'lon': False, 'chuva_1h': ':.1f', 'chuva_6h': ':.1f', 'chuva_24h': ':.1f'},
+                    text="txt_mapa", color="status", color_discrete_map=color_map,
+                    size=[30]*len(df_mapa), zoom=10.7, center={"lat": -3.065, "lon": -59.95},
+                    mapbox_style="open-street-map"
+                )
+                fig_mapa.update_traces(mode='markers+text', textposition='middle center', textfont=dict(size=12, color='black', weight='bold'))
+                fig_mapa.update_layout(
+                    margin={"r":0,"t":0,"l":0,"b":0},
+                    legend=dict(orientation="h", yanchor="bottom", y=0.01, xanchor="center", x=0.5, bgcolor="rgba(255,255,255,0.9)", title="")
+                )
+            else: fig_mapa = fig_empty
+
+            # --- 3. CARDS ---
             cards = []
             for _, row in ultimas.iterrows():
                 v24 = row['chuva_24h']
                 nivel = get_nivel_alerta(v24)
                 config = LIMIARES[nivel]
                 
-                # Determinar estilo baseado no nível
+                # Estilo Visual Cards
+                card_style = {"borderLeft": f"5px solid {config['cor']}", "borderRadius": "12px", "backgroundColor": "white", "transition": "all 0.3s ease", "position": "relative", "overflow": "hidden"}
+                texto_classe, icon_opacity, icon_color, subtexto_style = "text-dark", "0.15", config['cor'], {"color": "#6c757d"}
+                
                 if nivel in ['CRÍTICO', 'ATENÇÃO']:
-                    # Níveis altos - fundo colorido com gradiente
-                    card_style = {
-                        "background": f"linear-gradient(135deg, {config['cor']} 0%, {config['cor']}99 100%)",
-                        "borderRadius": "12px",
-                        "transition": "transform 0.3s ease, box-shadow 0.3s ease",
-                        "boxShadow": f"0 4px 12px {config['cor']}40",
-                        "border": "none",
-                        "position": "relative",
-                        "overflow": "hidden"
-                    }
-                    
-                    # Efeito de pulsação para CRÍTICO
-                    if nivel == 'CRÍTICO':
-                        card_style["animation"] = "pulseCritical 2s infinite"
-                        card_style["border"] = "2px solid #c0392b"
-                    
-                    text_color = "white"
-                    badge_style = "badge bg-white text-dark me-1 opacity-90"
-                    
-                else:
-                    # Níveis baixos - fundo branco com borda colorida
-                    card_style = {
-                        "backgroundColor": "white",
-                        "borderLeft": f"6px solid {config['cor']}",
-                        "borderRadius": "12px",
-                        "transition": "transform 0.3s ease",
-                        "boxShadow": "0 2px 8px rgba(0,0,0,0.08)",
-                        "border": "1px solid #e2e8f0",
-                        "position": "relative"
-                    }
-                    text_color = "#2c3e50"
-                    badge_style = "badge bg-light text-dark border me-1"
-                
-                # Ícone baseado no nível
-                icon_class = config['icone']
-                
-                # Criar card
-                card = dbc.Col(
-                    dbc.Card([
-                        dbc.CardBody([
-                            # Badge de status no topo
-                            html.Div([
-                                html.Span(
-                                    nivel,
-                                    className=f"status-badge position-absolute top-0 start-0 m-2",
-                                    style={
-                                        "backgroundColor": config['cor'],
-                                        "color": config['cor_texto'],
-                                        "fontSize": "0.65rem",
-                                        "padding": "3px 10px",
-                                        "borderRadius": "12px",
-                                        "fontWeight": "bold",
-                                        "textTransform": "uppercase"
-                                    }
-                                ),
-                                html.I(className=f"fas {icon_class} fa-2x position-absolute top-0 end-0 m-3 opacity-25", 
-                                      style={"color": config['cor_texto'] if nivel in ['NORMAL', 'OBSERVAÇÃO'] else "white"})
-                            ]),
-                            
-                            # Nome da estação
-                            html.H6(
-                                row['nome_limpo'], 
-                                className="text-uppercase fw-bold mb-3 mt-4", 
-                                style={"fontSize": "0.75rem", "color": text_color, "letterSpacing": "0.5px"}
-                            ),
-                            
-                            # Valor principal (24h) - Destaque maior
-                            html.Div([
-                                html.Div([
-                                    html.Span(f"{v24:.1f}", className="fw-bold display-6", style={"color": text_color}),
-                                    html.Small(" mm", className="ms-1", style={"color": text_color, "opacity": 0.8})
-                                ], className="d-flex align-items-end justify-content-center"),
-                                html.Small("últimas 24h", className="text-center d-block mt-1", 
-                                         style={"color": text_color, "opacity": 0.8, "fontSize": "0.7rem"})
-                            ], className="mb-3"),
-                            
-                            # Separador
-                            html.Hr(className="my-2", style={"opacity": "0.2"}),
-                            
-                            # Valores secundários
-                            html.Div([
-                                html.Div([
-                                    html.Small("1h: ", className="text-muted me-1"),
-                                    html.Span(f"{row['chuva_1h']:.1f}", 
-                                             className=f"{'fw-bold text-danger' if row['chuva_1h'] >= 10 else 'fw-bold'}", 
-                                             style={"color": text_color})
-                                ], className="d-flex justify-content-between mb-1"),
-                                
-                                html.Div([
-                                    html.Small("6h: ", className="text-muted me-1"),
-                                    html.Span(f"{row['chuva_6h']:.1f}", 
-                                             className=f"{'fw-bold text-warning' if row['chuva_6h'] >= 30 else 'fw-bold'}", 
-                                             style={"color": text_color})
-                                ], className="d-flex justify-content-between")
-                            ], className="small"),
-                            
-                            # Barra de progresso visual
-                            html.Div([
-                                html.Div(
-                                    className="progress-bar",
-                                    style={
-                                        "width": f"{min(v24/100*100, 100)}%",
-                                        "backgroundColor": config['cor'],
-                                        "height": "4px",
-                                        "borderRadius": "2px",
-                                        "marginTop": "10px"
-                                    }
-                                )
-                            ], className="progress", style={"height": "4px", "backgroundColor": "#e2e8f0", "opacity": "0.5"})
+                    card_style.update({"background": f"linear-gradient(135deg, {config['cor']} 0%, {config['cor']}dd 100%)", "border": "none"})
+                    texto_classe, icon_opacity, icon_color, subtexto_style = "text-white", "0.25", "white", {"color": "rgba(255,255,255,0.8)"}
+
+                cards.append(dbc.Col(dbc.Card([
+                    dbc.CardBody([
+                        html.I(className=f"fas {config['icone']}", style={"position": "absolute", "right": "10px", "top": "50%", "transform": "translateY(-50%)", "fontSize": "4rem", "opacity": icon_opacity, "color": icon_color}),
+                        html.Div([
+                            html.H6(row['nome_limpo'], className=f"text-uppercase fw-bold mb-1 {texto_classe}", style={"fontSize": "0.8rem", "position": "relative", "zIndex": 1}),
+                            html.Div([html.Span(f"{v24:.1f}", className=f"fw-bold display-6 {texto_classe}"), html.Small(" mm", className="ms-1 fs-6", style=subtexto_style)], style={"position": "relative", "zIndex": 1}),
+                            html.Div([html.Div(style={"height": "5px", "width": f"{min(v24, 100)}%", "backgroundColor": "white" if nivel in ['CRÍTICO', 'ATENÇÃO'] else config['cor'], "borderRadius": "3px", "opacity": "0.9"})], style={"width": "100%", "backgroundColor": "rgba(0,0,0,0.1)", "height": "5px", "borderRadius": "3px", "marginTop": "10px", "position": "relative", "zIndex": 1}),
+                            html.Div([html.Span(f"1h: {row['chuva_1h']:.1f}mm", className="me-3"), html.Span(f"6h: {row['chuva_6h']:.1f}mm")], className="mt-3 small fw-bold", style=subtexto_style)
                         ])
-                    ], className="h-100 card-hover", style=card_style),
-                    width=12, md=6, lg=3, className="mb-3"
-                )
-                
-                cards.append(card)
+                    ], className="p-3")
+                ], className="shadow-sm h-100 border-0", style=card_style), width=12, md=6, lg=3, className="mb-3"))
 
             # --- 4. GRÁFICO GERAL ---
-            cores_barras = ultimas['chuva_24h'].apply(get_color_code).tolist()
-            fig_bar = px.bar(ultimas, x="nome_limpo", y="chuva_24h", text="chuva_24h")
-            fig_bar.update_traces(marker_color=cores_barras, texttemplate='%{text:.1f}', textposition='outside', cliponaxis=False)
+            fig_bar = px.bar(ranking_df, x="nome_limpo", y="chuva_24h", text="chuva_24h")
+            fig_bar.update_traces(marker_color=[get_color_code(v) for v in ranking_df['chuva_24h']], texttemplate='%{text:.1f}', textposition='outside', cliponaxis=False)
             fig_bar = style_fig(fig_bar, "Acumulado Total 24h (mm)")
+            fig_bar.update_layout(xaxis={'categoryorder':'total descending'}, yaxis=dict(title="Milímetros (mm)"), xaxis_title=None)
+            fig_bar.add_hline(y=30, line_dash="dot", line_color="#e67e22", annotation_text="Atenção (30mm)", annotation_position="top right", opacity=0.7)
 
-            return options, tabela_ranking, fig_mapa, cards, fig_bar
+            return options, tabela_ranking, fig_mapa, cards, fig_bar 
 
         except Exception as e:
-            print("❌ ERRO NO CEMADEN:")
             traceback.print_exc()
             return empty_return
