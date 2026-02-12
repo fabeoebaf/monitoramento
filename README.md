@@ -5,9 +5,15 @@
 ![Status](https://img.shields.io/badge/Status-Em_Desenvolvimento-yellow)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Dash](https://img.shields.io/badge/Dash-Plotly-orange)
+Você pode acessar o painel rodando em tempo real através do link abaixo:
 
-## 🎯 Objetivo
-Este projeto visa fornecer uma interface visual robusta para o monitoramento de Manaus, permitindo a visualização rápida de dados críticos como **acumulado de chuva**, **nível dos rios**, **temperatura** e **ventos**. O sistema destaca automaticamente estações em estado de alerta.
+## 🔗 Acesso Online (Live Demo)
+
+Você pode acessar o painel rodando em tempo real através do link abaixo:
+
+### 👉 **[https://monitoramento-yyf5.onrender.com](https://monitoramento-yyf5.onrender.com)**
+
+> ⚠️ **Nota:** Como o projeto utiliza o plano gratuito do Render, o primeiro carregamento pode levar até **1 minuto** (Cold Start). Agradeço a paciência!
 
 ## 📊 Funcionalidades Principais
 
