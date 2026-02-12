@@ -82,9 +82,8 @@ monitoramento/
 - Banco de dados configurado (PostgreSQL/MySQL) ou arquivo `db.py` simulando os dados.
 
 ### Instalação
-```
 1. **Clone o repositório:**
     ```bash
    git clone [https://github.com/fabeoebaf/monitoramento.git](https://github.com/fabeoebaf/monitoramento.git)
    cd monitoramento
-```
+    ```
