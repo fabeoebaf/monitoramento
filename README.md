@@ -59,6 +59,19 @@ O sistema classifica o status das estações com base no acumulado pluviométric
 - **[Pandas](https://pandas.pydata.org/)**: Manipulação e análise de dados.
 - **[Dash Bootstrap Components](https://dash-bootstrap-components.opensource.faculty.ai/)**: Estilização responsiva.
 
+
+## 📂 Estrutura do Projeto
+
+monitoramento/
+├── app.py              # Aplicação Principal (Entry Point)
+├── db.py               # Conexão e Queries ao Banco de Dados
+├── requirements.txt    # Dependências do Projeto
+├── assets/             # Imagens, CSS customizado e Logos
+└── views/              # Módulos das Páginas (Multi-page App)
+    ├── monitoramento.py    # Mapa e KPIs
+    ├── cemaden.py          # Dados Pluviométricos
+    ├── previsao.py         # Modelos Numéricos
+    └── relatorios.py       # Exportação e Histórico
 ---
 
 ## 🚀 Como Rodar o Projeto
@@ -70,6 +83,5 @@ O sistema classifica o status das estações com base no acumulado pluviométric
 ### Instalação
 
 1. **Clone o repositório:**
-   ```bash
    git clone [https://github.com/fabeoebaf/monitoramento.git](https://github.com/fabeoebaf/monitoramento.git)
    cd monitoramento
