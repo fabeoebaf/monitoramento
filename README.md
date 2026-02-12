@@ -62,6 +62,7 @@ O sistema classifica o status das estações com base no acumulado pluviométric
 
 ## 📂 Estrutura do Projeto
 
+```bash
 monitoramento/
 ├── app.py              # Aplicação Principal (Entry Point)
 ├── db.py               # Conexão e Queries ao Banco de Dados
@@ -72,8 +73,6 @@ monitoramento/
     ├── cemaden.py          # Dados Pluviométricos
     ├── previsao.py         # Modelos Numéricos
     └── relatorios.py       # Exportação e Histórico
----
-
 ## 🚀 Como Rodar o Projeto
 
 ### Pré-requisitos
@@ -83,5 +82,6 @@ monitoramento/
 ### Instalação
 
 1. **Clone o repositório:**
+    ```bash
    git clone [https://github.com/fabeoebaf/monitoramento.git](https://github.com/fabeoebaf/monitoramento.git)
    cd monitoramento
