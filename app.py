@@ -38,11 +38,16 @@ app = dash.Dash(
     external_stylesheets=[
         dbc.themes.BOOTSTRAP,
         "https://use.fontawesome.com/releases/v5.15.4/css/all.css",
-        "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" # <--- ADICIONE ISSO
+        "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap"
+    ],
+    meta_tags=[
+        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+        {"name": "author", "content": "Fabio Nunes"}, # <--- Sua autoria aqui
+        {"name": "description", "content": "Dashboard de Monitoramento de Manaus desenvolvido em Python."}
     ],
     suppress_callback_exceptions=True,
-    update_title=None,          # Impede o "Updating..." de piscar
-    title="Monitoramento Manaus" # Define o nome fixo da aba
+    update_title=None,           # Impede o "Updating..." de piscar na aba
+    title="Monitoramento Manaus" # Nome que aparece na aba do navegador
 )
 server = app.server
 
@@ -51,7 +56,7 @@ navbar = dbc.Navbar(
     dbc.Container([
         html.A(
             dbc.Row([
-                dbc.Col(dbc.NavbarBrand("CENTRO DE OPERAÇÕES | MANAUS", className="ms-2 fw-bold text-uppercase")),
+                dbc.Col(dbc.NavbarBrand("PAINEL DE MONITORAMENTO | MANAUS", className="ms-2 fw-bold text-uppercase")),
             ], align="center", className="g-0"),
             href="/",
             style={"textDecoration": "none"},
@@ -82,17 +87,32 @@ navbar = dbc.Navbar(
     sticky="top"
 )
 
-# --- RODAPÉ ---
+# --- RODAPÉ ATUALIZADO ---
 footer = html.Footer(
     dbc.Container([
+        html.Hr(className="mt-5 mb-4"), # Linha separadora
         dbc.Row([
+            # Coluna da Esquerda: Copyright do Sistema
             dbc.Col([
-                html.P("© 2026 Defesa Civil de Manaus - Sistema de Monitoramento Hidrometeorológico", className="text-muted mb-0 small"),
-                html.Small("Dados: Prefeitura de Manaus | INMET | Cemaden | Open-Meteo", className="text-muted")
-            ], width=12, className="text-center py-3")
+                html.P("© 2026 Painel Monitoramento Manaus", className="mb-0 fw-bold"),
+                html.Small("Dados: Prefeitura de Manaus | Cemaden | Open-Meteo", className="text-muted")
+            ], width=12, md=6),
+            
+            # Coluna da Direita: Sua Autoria (Com Links)
+            dbc.Col([
+                html.P([
+                    "Desenvolvido por ",
+                    html.A("Fabio Nunes", href="https://www.linkedin.com/in/fabiionunees/", target="_blank", className="text-decoration-none fw-bold"),
+                ], className="mb-0"),
+                html.Div([
+                    # Ícones de contato (opcional)
+                    html.A(html.I(className="fab fa-github me-3"), href="https://github.com/fabeoebaf", target="_blank", className="text-secondary"),
+                    html.A(html.I(className="fab fa-linkedin"), href="https://www.linkedin.com/in/fabiionunees/", target="_blank", className="text-secondary"),
+                ], className="mt-1")
+            ], width=12, md=6, className="text-md-end mt-3 mt-md-0") # Alinha à direita em telas grandes
         ])
     ], fluid=True),
-    className="bg-light mt-5 border-top"
+    className="bg-light py-4 mt-auto" # mt-auto ajuda a empurrar pro final
 )
 
 # --- LAYOUT PRINCIPAL ---
